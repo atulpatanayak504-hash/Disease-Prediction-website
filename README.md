@@ -10,3 +10,4 @@ Step 4:- Use ctrl+click and it will direct you to the website.
 
 This is the steps to run the project
 
+We made this project so we know these steps will work on vs code.
