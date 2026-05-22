@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Disease Prediction System</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --teal-dark:  #0A4D3C;
+      --teal:       #0F6E56;
+      --teal-mid:   #1D9E75;
+      --teal-light: #5DCAA5;
+      --teal-pale:  #E1F5EE;
+      --ink:        #111917;
+      --ink-mid:    #3A4A45;
+      --ink-light:  #6B7E78;
+      --surface:    #F5FAF8;
+      --white:      #FFFFFF;
+      --border:     #D0E8DF;
+      --red:        #A32D2D;
+      --red-pale:   #FCEBEB;
+      --amber:      #854F0B;
+      --amber-pale: #FAEEDA;
+    }
+
+    html { font-size: 16px; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--surface);
+      color: var(--ink);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--teal-dark);
+      padding: 20px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    header .logo {
+      display: flex; align-items: center; gap: 12px;
+    }
+    header .logo svg { width: 32px; height: 32px; }
+    header .logo-text {
+      color: var(--white);
+      font-family: 'DM Serif Display', serif;
+      font-size: 20px;
+      letter-spacing: -0.3px;
+    }
+    .accuracy-badge {
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: var(--white);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 6px 14px;
+      border-radius: 20px;
+      letter-spacing: 0.04em;
+    }
+    .accuracy-badge span { color: var(--teal-light); font-weight: 600; }
+
+    /* ── Hero ── */
+    .hero {
+      background: linear-gradient(135deg, var(--teal-dark) 0%, var(--teal) 100%);
+      padding: 52px 32px 60px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .hero h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(28px, 5vw, 42px);
+      color: var(--white);
+      line-height: 1.2;
+      margin-bottom: 12px;
+      position: relative;
+    }
+    .hero h1 em { color: var(--teal-light); font-style: italic; }
+    .hero p {
+      font-size: 15px;
+      color: rgba(255,255,255,0.72);
+      max-width: 480px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    /* ── Main layout ── */
+    .container { max-width: 780px; margin: 0 auto; padding: 40px 20px 60px; }
+
+    /* ── Card ── */
+    .card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    .card-header {
+      background: var(--teal-pale);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .card-header h2 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 18px;
+      color: var(--teal-dark);
+    }
+    .card-header .step {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--teal);
+      color: #fff; font-size: 13px; font-weight: 600;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .card-body { padding: 24px; }
+
+    /* ── Symptom grid ── */
+    .symptom-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+    }
+    .symptom-toggle {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      user-select: none;
+      background: var(--surface);
+    }
+    .symptom-toggle:hover { border-color: var(--teal-mid); background: var(--teal-pale); }
+    .symptom-toggle.active {
+      border-color: var(--teal);
+      background: var(--teal-pale);
+      box-shadow: 0 0 0 3px rgba(15,110,86,0.12);
+    }
+    .symptom-toggle .sym-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+      transition: all 0.18s;
+    }
+    .symptom-toggle.active .sym-icon {
+      background: var(--teal);
+      border-color: var(--teal);
+    }
+    .symptom-toggle.active .sym-icon svg path,
+    .symptom-toggle.active .sym-icon svg rect,
+    .symptom-toggle.active .sym-icon svg circle { stroke: #fff; }
+    .sym-label {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ink-mid);
+    }
+    .symptom-toggle.active .sym-label { color: var(--teal-dark); }
+    .sym-check {
+      margin-left: auto;
+      width: 20px; height: 20px; border-radius: 50%;
+      border: 1.5px solid var(--border);
+      background: var(--white);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.18s;
+    }
+    .symptom-toggle.active .sym-check {
+      background: var(--teal);
+      border-color: var(--teal);
+    }
+
+    /* ── Button ── */
+    .btn-predict {
+      width: 100%;
+      padding: 15px;
+      background: var(--teal);
+      color: var(--white);
+      border: none;
+      border-radius: 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-predict:hover { background: var(--teal-dark); }
+    .btn-predict:active { transform: scale(0.99); }
+    .btn-predict:disabled { opacity: 0.6; cursor: wait; }
+
+    /* ── Loader ── */
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Result ── */
+    #result-section { display: none; }
+    .result-card {
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .result-header {
+      padding: 20px 24px;
+      display: flex; align-items: center; gap: 16px;
+    }
+    .result-header.covid   { background: var(--red-pale); }
+    .result-header.flu     { background: var(--amber-pale); }
+    .result-header.migraine { background: #EDE9FE; }
+    .result-header.cold    { background: #EFF6FF; }
+    .result-header.healthy { background: var(--teal-pale); }
+
+    .disease-icon {
+      width: 56px; height: 56px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px; flex-shrink: 0;
+    }
+    .result-title { font-family: 'DM Serif Display', serif; font-size: 24px; }
+    .result-label { font-size: 12px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; }
+    .result-body { background: var(--white); padding: 20px 24px; }
+    .suggestion-row {
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 14px;
+      background: var(--surface);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+    .suggestion-row svg { flex-shrink: 0; margin-top: 2px; }
+    .suggestion-text { font-size: 14px; color: var(--ink-mid); line-height: 1.6; }
+
+    .symptoms-taken {
+      margin-top: 16px;
+      display: flex; flex-wrap: wrap; gap: 7px;
+    }
+    .sym-pill {
+      font-size: 12px; padding: 4px 12px;
+      border-radius: 20px;
+      background: var(--teal-pale);
+      color: var(--teal-dark);
+      border: 1px solid rgba(15,110,86,0.2);
+      font-weight: 500;
+    }
+
+    .btn-reset {
+      margin-top: 16px; width: 100%; padding: 11px;
+      background: transparent;
+      color: var(--teal);
+      border: 1.5px solid var(--teal);
+      border-radius: 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px; font-weight: 500;
+      cursor: pointer; transition: all 0.18s;
+    }
+    .btn-reset:hover { background: var(--teal-pale); }
+
+    /* ── Info strip ── */
+    .info-strip {
+      display: flex; gap: 16px; flex-wrap: wrap;
+      margin-top: 0;
+    }
+    .info-item {
+      flex: 1; min-width: 160px;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex; gap: 12px; align-items: flex-start;
+    }
+    .info-item-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: var(--teal-pale);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .info-item h4 { font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 2px; }
+    .info-item p { font-size: 12px; color: var(--ink-light); line-height: 1.5; }
+
+    /* ── Disclaimer ── */
+    .disclaimer {
+      margin-top: 24px;
+      padding: 14px 18px;
+      background: #FFFBEB;
+      border: 1px solid #FCD34D;
+      border-radius: 10px;
+      font-size: 12px;
+      color: #92400E;
+      line-height: 1.6;
+    }
+    .disclaimer strong { font-weight: 600; }
+
+    footer {
+      text-align: center;
+      padding: 24px;
+      font-size: 12px;
+      color: var(--ink-light);
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="32" height="32" rx="8" fill="rgba(255,255,255,0.12)"/>
+      <path d="M16 7v18M7 16h18" stroke="#5DCAA5" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>
+    <span class="logo-text">MediPredict</span>
+  </div>
+  <div class="accuracy-badge">Model Accuracy: <span>{{ accuracy }}%</span></div>
+</header>
+
+<div class="hero">
+  <h1>AI-Powered <em>Disease Prediction</em></h1>
+  <p>Select your symptoms below. Our Random Forest ML model will analyze them and suggest a possible diagnosis.</p>
+</div>
+
+<div class="container">
+
+  <!-- Symptom Selection Card -->
+  <div class="card">
+    <div class="card-header">
+      <div class="step">1</div>
+      <h2>Select Your Symptoms</h2>
+    </div>
+    <div class="card-body">
+      <div class="symptom-grid">
+
+        <!-- Fever -->
+        <div class="symptom-toggle" data-symptom="fever" onclick="toggle(this)">
+          <div class="sym-icon">
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+              <path d="M12 2v10m0 0a4 4 0 100 8 4 4 0 000-8z" stroke="#0F6E56" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <span class="sym-label">Fever</span>
+          <div class="sym-check">
+            <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+
+        <!-- Cough -->
+        <div class="symptom-toggle" data-symptom="cough" onclick="toggle(this)">
+          <div class="sym-icon">
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+              <path d="M3 12c0-5 3-9 9-9s9 4 9 9M12 12v5m0 0l-3 3m3-3l3 3" stroke="#0F6E56" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <span class="sym-label">Cough</span>
+          <div class="sym-check">
+            <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+
+        <!-- Headache -->
+        <div class="symptom-toggle" data-symptom="headache" onclick="toggle(this)">
+          <div class="sym-icon">
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+              <circle cx="12" cy="10" r="7" stroke="#0F6E56" stroke-width="1.8"/>
+              <path d="M12 17v4" stroke="#0F6E56" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <span class="sym-label">Headache</span>
+          <div class="sym-check">
+            <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+
+        <!-- Fatigue -->
+        <div class="symptom-toggle" data-symptom="fatigue" onclick="toggle(this)">
+          <div class="sym-icon">
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+              <path d="M12 5v7l4 2" stroke="#0F6E56" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="12" cy="12" r="9" stroke="#0F6E56" stroke-width="1.8"/>
+            </svg>
+          </div>
+          <span class="sym-label">Fatigue</span>
+          <div class="sym-check">
+            <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+
+        <!-- Body Pain -->
+        <div class="symptom-toggle" data-symptom="bodypain" onclick="toggle(this)">
+          <div class="sym-icon">
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+              <circle cx="12" cy="4" r="2" stroke="#0F6E56" stroke-width="1.8"/>
+              <path d="M12 6v7m0 0l-3 5m3-5l3 5M9 10h6" stroke="#0F6E56" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <span class="sym-label">Body Pain</span>
+          <div class="sym-check">
+            <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Predict Button Card -->
+  <div class="card">
+    <div class="card-header">
+      <div class="step">2</div>
+      <h2>Get Diagnosis</h2>
+    </div>
+    <div class="card-body">
+      <p style="font-size:14px;color:var(--ink-light);margin-bottom:16px;">Once you've selected at least one symptom, click below to run the Random Forest model and receive a prediction.</p>
+      <button class="btn-predict" id="predictBtn" onclick="predict()">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span id="btnText">Predict Disease</span>
+        <div class="spinner" id="spinner"></div>
+      </button>
+    </div>
+  </div>
+
+  <!-- Result Section -->
+  <div id="result-section">
+    <div class="card">
+      <div class="card-header">
+        <div class="step">3</div>
+        <h2>Prediction Result</h2>
+      </div>
+      <div class="card-body" style="padding:0;">
+        <div class="result-card" id="resultCard">
+          <div class="result-header" id="resultHeader">
+            <div class="disease-icon" id="diseaseIcon"></div>
+            <div>
+              <div class="result-label" id="resultLabel">Predicted condition</div>
+              <div class="result-title" id="resultTitle"></div>
+            </div>
+          </div>
+          <div class="result-body">
+            <div class="suggestion-row">
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#0F6E56" stroke-width="1.8" stroke-linecap="round"/></svg>
+              <div class="suggestion-text" id="suggestionText"></div>
+            </div>
+            <div class="symptoms-taken" id="symptomsTaken"></div>
+            <button class="btn-reset" onclick="resetForm()">&#8635; Check Again</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Info Strip -->
+  <div class="info-strip">
+    <div class="info-item">
+      <div class="info-item-icon">
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" stroke="#0F6E56" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div>
+        <h4>Random Forest</h4>
+        <p>100 decision trees trained on symptom-disease data for robust predictions.</p>
+      </div>
+    </div>
+    <div class="info-item">
+      <div class="info-item-icon">
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" stroke="#0F6E56" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div>
+        <h4>Model Accuracy</h4>
+        <p>Trained with scikit-learn achieving <strong>{{ accuracy }}%</strong> accuracy on test data.</p>
+      </div>
+    </div>
+    <div class="info-item">
+      <div class="info-item-icon">
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke="#854F0B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div>
+        <h4>Educational Use</h4>
+        <p>This tool is a student project. Always consult a licensed doctor for real diagnoses.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    <strong>&#9888; Disclaimer:</strong> This is a machine learning group project for educational purposes only. It does not constitute medical advice. The dataset used is small and synthetic. Do not use this tool to make real health decisions — always consult a qualified medical professional.
+  </div>
+</div>
+
+<footer>MediPredict &mdash; Disease Prediction System &bull; Group Project &bull; Built with Python, Flask &amp; scikit-learn</footer>
+
+<script>
+  const diseaseConfig = {
+    "COVID-19":  { cls:"covid",    icon:"🦠", label:"High-risk viral infection", color:"#A32D2D" },
+    "Flu":       { cls:"flu",      icon:"🤧", label:"Seasonal influenza",        color:"#854F0B" },
+    "Migraine":  { cls:"migraine", icon:"🧠", label:"Neurological condition",    color:"#5B21B6" },
+    "Cold":      { cls:"cold",     icon:"❄️",  label:"Common cold",               color:"#1D4ED8" },
+    "Healthy":   { cls:"healthy",  icon:"✅", label:"No disease detected",       color:"#0F6E56" }
+  };
+
+  function toggle(el) {
+    el.classList.toggle('active');
+  }
+
+  function getSymptoms() {
+    const map = {};
+    document.querySelectorAll('.symptom-toggle').forEach(el => {
+      map[el.dataset.symptom] = el.classList.contains('active') ? 1 : 0;
+    });
+    return map;
+  }
+
+  async function predict() {
+    const symptoms = getSymptoms();
+    const hasAny = Object.values(symptoms).some(v => v === 1);
+    if (!hasAny) { alert("Please select at least one symptom."); return; }
+
+    const btn = document.getElementById('predictBtn');
+    const spinner = document.getElementById('spinner');
+    const btnText = document.getElementById('btnText');
+    btn.disabled = true;
+    spinner.style.display = 'block';
+    btnText.textContent = 'Analyzing…';
+
+    try {
+      const res = await fetch('/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(symptoms)
+      });
+      const data = await res.json();
+      showResult(data, symptoms);
+    } catch(e) {
+      alert('Error: Could not reach the server.');
+    } finally {
+      btn.disabled = false;
+      spinner.style.display = 'none';
+      btnText.textContent = 'Predict Disease';
+    }
+  }
+
+  function showResult(data, symptoms) {
+    const cfg = diseaseConfig[data.disease] || { cls:"healthy", icon:"❓", label:"Unknown condition", color:"#555" };
+
+    document.getElementById('resultHeader').className = 'result-header ' + cfg.cls;
+    document.getElementById('diseaseIcon').textContent = cfg.icon;
+    document.getElementById('diseaseIcon').style.background = cfg.cls === 'healthy' ? '#E1F5EE' : cfg.cls === 'covid' ? '#FCEBEB' : cfg.cls === 'flu' ? '#FAEEDA' : cfg.cls === 'migraine' ? '#EDE9FE' : '#EFF6FF';
+    document.getElementById('resultLabel').textContent = cfg.label;
+    document.getElementById('resultTitle').textContent = data.disease;
+    document.getElementById('resultTitle').style.color = cfg.color;
+    document.getElementById('suggestionText').textContent = data.suggestion;
+
+    const names = { fever:'Fever', cough:'Cough', headache:'Headache', fatigue:'Fatigue', bodypain:'Body Pain' };
+    const pillsEl = document.getElementById('symptomsTaken');
+    pillsEl.innerHTML = '';
+    Object.entries(symptoms).forEach(([k,v]) => {
+      if (v) {
+        const p = document.createElement('span');
+        p.className = 'sym-pill';
+        p.textContent = names[k];
+        pillsEl.appendChild(p);
+      }
+    });
+
+    const section = document.getElementById('result-section');
+    section.style.display = 'block';
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function resetForm() {
+    document.querySelectorAll('.symptom-toggle').forEach(el => el.classList.remove('active'));
+    document.getElementById('result-section').style.display = 'none';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
+</body>
+</html>
